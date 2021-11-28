@@ -10,11 +10,15 @@
 % 
 % Edit: Ewoud Smeur (2021)
 %================================================
-clear;
+%clear;
+clearvars -except x_a
 
 global fi_flag_Simulink
 
 newline = sprintf('\n');
+
+
+
 
 %% Trim aircraft to desired altitude and velocity
 %%
@@ -144,3 +148,5 @@ bode(SS_lat_hi(output,input),omega)
 hold on;
 bode(SS_lat_lo(output,input),omega)
 legend('hifi','lofi')
+
+
