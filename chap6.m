@@ -66,7 +66,6 @@ D_ac2 = lat_red1.D;
 lat_red2 = ss(A_ac2, B_ac2, C_ac2, D_ac2, 'StateName', SS_lat_lo.StateName(states_lat2), ...
     'InputName', SS_lat_lo.InputName(inputs_lat2), 'OutputName', SS_lat_lo.OutputName(outputs_lat2))
 
-
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calculation of the inherent motion characteristics

@@ -66,7 +66,8 @@ D_ac2 = lat_red1.D;
 lat_red2 = ss(A_ac2, B_ac2, C_ac2, D_ac2, 'StateName', SS_lat_lo.StateName(states_lat2), ...
     'InputName', SS_lat_lo.InputName(inputs_lat2), 'OutputName', SS_lat_lo.OutputName(outputs_lat2))
 
-
+save(long_red2, 'lon_red_6
+save(lat_red2, 'lat_red_6')
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Calculation of the inherent motion characteristics
@@ -88,9 +89,12 @@ H_q_el = tfs_lon(4,2)
 % elevator to pitch attitude (for phugoid motion)
 H_theta_el = tfs_lon(3,2)
 
-% rudder to roll TF (for dutch roll) 
+% rudder to roll attitude TF (for dutch roll) 
 H_phi_rud = tfs_lat(2,2)
 
-% 
+% roll rate to aileron TF (for aperiodic roll)
+H_p_ail = tfs_lat(3,1)
+
+% TODO: roll angle plot 
 
 
