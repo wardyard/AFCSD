@@ -3,7 +3,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 load('20000_900_lin.mat')
-s = tf('s');
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -103,10 +102,6 @@ H_r_rud = tfs_lat(4,2)
 % roll rate to aileron TF (for aperiodic roll)
 H_p_ail = tfs_lat(3,1)
 
-% roll angle to aileron TF (for spiral) 
-H_phi_ail = tfs_lat(2,1)
-% input signal for spiral motion: step of 3 sec 
-
 % plot short period 
 fig1 = figure(1);
 [y , time] = step(H_q_el,15); 
@@ -152,12 +147,5 @@ plot(time, y)
 xlabel('time [s]'); 
 ylabel('p [rad/s]'); 
 title('roll rate response to aileron step input (Aperiodic roll)'); 
-
-% plot spiral
-%fig5 = figure(5); 
-%plot(step(H_phi_ail*input_spiral))
-%xlabel('time [s]'); 
-%ylabel('\phi [°]'); 
-%title('roll angle reponse to aileron step input (spiral)'); 
 
 

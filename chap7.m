@@ -1,4 +1,6 @@
 
+clear all; 
+close all; 
 % ---- 7.3 CAP criterion
 load('long_red2.mat');
 
@@ -65,16 +67,16 @@ V = 274.32;
 
 %For 3 and 4, using gain tuning to get the required level 1 CAP, but first
 %determine values that will work for wn and zeta NOTE: w_required seem way too high, impossible in fact:
-w_required = 0.03*V;
-T_theta_required = 1/(0.75*w_required);
-zeta_required = 0.5;
+w_required = 0.03*V
+T_theta_required = 1/(0.75*w_required)
+zeta_required = 0.5
 
 %Negative as you need negative gains
 p1 = -w_required*zeta_required + w_required*sqrt(zeta_required^2-1);
 p2 = -w_required*zeta_required - w_required*sqrt(zeta_required^2-1);
 
 p = [p1 p2];
-K = place(A_ac_sp, B_ac_sp, p);
+K = place(A_ac_sp, B_ac_sp, p)
 K_alpha = K(1);
 K_q = K(2);
 
@@ -107,4 +109,54 @@ plot(t, y3)
 overshoot = (max(y3)- y3(end))/(y3(end))*100
 %overshoot is less than 1, thus the lower part of the "satisfactory" region
 %cannot be attained and drobback is not possible.
+
+
+
+% Ward's take on determining K_alpha and K_q
+
+% 1) determine alpha to elevator TF
+H_alpha = long_red_sp_tf(1,1)
+
+% 2) use rltool to determine open loop K_alpha to obtain w_n_sp > 8.2296
+ %rad/s
+
+%rltool(-H_alpha)
+
+% gain K_alpha is -3.6506 from rltool
+K_alpha = -3.6506
+
+% 3) incorporate alpha feedback into new state space (inner loop)
+A_ac_sp_new = A_ac_sp - B_ac_sp*C_ac_sp(1,:)*K_alpha
+
+long_red_sp_new = ss(A_ac_sp_new, B_ac_sp, C_ac_sp, D_ac_sp, 'StateName', long_red2.StateName(states_lon_sp), ...
+    'InputName', long_red2.InputName(inputs_lon_sp));
+
+% 4) extract q to elevator TF
+tfs = minreal(tf(long_red_sp_new))
+H_q = tfs(2)
+
+% 5) determine outer loop gain K_q to get desired damping ratio of at least
+% 0.5
+%rltool(-H_q)
+
+% gain of -0.32844 results in zeta = 0.502 and w_n_sp = 8.6 rad/s
+% gain of -0.7778 results in zeta = 0.925 and w_n_sp = 9.03 rad/s => more
+% damping => favourable 
+
+K_q = -0.32844
+
+% 6) determine new state space with outer loop included as well 
+A_ac_sp_final = A_ac_sp_new - B_ac_sp*C_ac_sp(2,:)*K_q
+long_red_sp_final = ss(A_ac_sp_final, B_ac_sp, C_ac_sp, D_ac_sp, 'StateName', long_red2.StateName(states_lon_sp), ...
+    'InputName', long_red2.InputName(inputs_lon_sp));
+
+% 7) extract TF to check final response 
+tfs2 = minreal(tf(long_red_sp_final))
+H_q = tfs2(2)
+
+% 8) plot step response to see results of gains 
+fig3 = figure(3);
+step(-H_q)
+ylabel('q [rad/s]')
+
 
