@@ -7,7 +7,7 @@ load('chapter8.mat')
 
 % create 7 x 7 state space with actuator states included 
 states_lon = [1 3 4 2 5 6 7];   % h, V, alpha, theta, q + actuator states
-inputs_lon = [1 2];             % all inputs 
+inputs_lon = [1 2];             % thrust, elevtor deflection
 outputs_lon = [1 3 4 2 5];      % h, V, alpha, theta, q
 
 % determine state space representation 
@@ -32,3 +32,24 @@ D_ac1 = long_red1.D;
 % reduced state space model: 
 ss_red = ss(A_ac1, B_ac1, C_ac1, D_ac1, 'StateName', SS_long_lo.StateName(states_lon2), ...
     'InputName', SS_long_lo.InputName(inputs_lon2), 'OutputName', SS_long_lo.OutputName(outputs_lon2))
+
+% construct pitch attitude hold mode 
+% inner loop: pitch damper -> determine K_q via RL
+tfs = minreal(tf(ss_red));
+H_q_el = tfs(5,2)
+pole(H_q_el)
+servo = tf([20.2], [1 20.2])
+%rltool(minreal(-H_q_el*servo))
+K_q = -0.16635
+A_new = A_ac1 - B_ac1(:,2)*C_ac1(5,:)*K_q
+
+ss_red2 = ss(A_new, B_ac1, C_ac1, D_ac1, 'StateName', SS_long_lo.StateName(states_lon2), ...
+    'InputName', SS_long_lo.InputName(inputs_lon2), 'OutputName', SS_long_lo.OutputName(outputs_lon2))
+
+% construct pitch attitude hold mode 
+tfs2 = minreal(tf(ss_red2)); 
+H_theta_el = tfs2(4,1)
+%rltool(-H_theta_el)
+% we need PID controller 
+K_theta = 1.5104
+
