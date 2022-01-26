@@ -3,6 +3,7 @@ clear all;
 close all; 
 % ---- 7.3 CAP criterion
 load('long_red2.mat');
+syms t;
 
 %Reduce SS to short period motion simplification with AOA and q
 states_lon_sp = [3 4];
@@ -31,14 +32,36 @@ q_el = long_red_sp_tf(2,1);
 %question 2
 long_red_sp_tf4 = minreal(tf(long_red2));
 q_el4 = long_red_sp_tf4(4,2);
-t = 0:0.01:300;
-y1 = step(q_el4, t);
+t1 = 0:0.01:20;
+%opt = stepDataOptions('StepAmplitude', -1)
+y1 = step(-q_el4, t1);
 figure(1)
-plot(t, y1)
+plot(t1, y1)
 hold on
-y2 = step(q_el, t);
-plot(t, y2)
-legend("Pitch rate response (4 states)", "Pitch rate response(2 states)")
+%opt = stepDataOptions('StepAmplitude', -1)
+y2 = step(-q_el, t1);
+plot(t1, y2)
+legend("Pitch rate response (4 states)", "Pitch rate response (2 states)")
+xlabel('Time [s]', 'FontSize', 12, 'FontWeight', 'bold')
+ylabel('pitch rate [deg/s]', 'FontSize', 12, 'FontWeight', 'bold')
+grid on
+title('Pitch rate response on a step input', 'FontSize', 13)
+hold off
+
+t2 = 0:0.01:200;
+%opt = stepDataOptions('StepAmplitude', -1)
+y3 = step(-q_el4, t2);
+figure(2)
+plot(t2, y3)
+hold on
+%opt = stepDataOptions('StepAmplitude', -1)
+y4 = step(-q_el, t2);
+plot(t2, y4)
+legend("Pitch rate response (4 states)", "Pitch rate response (2 states)")
+xlabel('Time [s]', 'FontSize', 12, 'FontWeight', 'bold')
+ylabel('pitch rate [deg/s]', 'FontSize', 12, 'FontWeight', 'bold')
+grid on
+title('Pitch rate response on a step input', 'FontSize', 13)
 hold off
 
 
@@ -55,15 +78,7 @@ zeta = (denom{1}(2))/(2*sqrt(w_sp_squared));
 %For 1. CAP
 g = 9.81;
 V = 274.32;
-%CAP = (g/V)*w_sp_squared*T_theta;
 
-%For 2, Compare 4 state system with 2 state system. Answer: zoom in the first few
-%seconds, the difference is negligable. Later, phugoid takes over
-%long_red2_tf = tf(long_red2);
-%long_red2_tf_q_over_delta_e = long_red2_tf(4,2);
-%step(long_red2_tf_q_over_delta_e)
-%hold on
-%step(q_el)
 
 %For 3 and 4, using gain tuning to get the required level 1 CAP, but first
 %determine values that will work for wn and zeta NOTE: w_required seem way too high, impossible in fact:
@@ -101,25 +116,40 @@ s = tf('s');
 tf_new1 = minreal((K_q*(1+T_theta*s))/(s^2+2*zeta_required*w_required*s+w_required^2));
 filter = (1+T_theta_required*s)/(1+T_theta*s)
 tf_new2 = minreal(tf_new1*filter)
-t = 0:0.001:30;
-figure(2)
-opt = stepDataOptions('StepAmplitude', -1);
-[y3, t] = step(tf_new2, opt);
-plot(t, y3)
-overshoot = (max(y3)- y3(end))/(y3(end))*100
-
-qmoverqs = max(y3)/y3(end);
+t = 0:0.01:20;
 figure(3)
+%opt = stepDataOptions('StepAmplitude', -1);
+%[y3, t] = step(tf_new2, opt);
+u = -1+1*heaviside(t-10);
+y3 = lsim(tf_new2,u,t);
+plot(t, y3)
+xlabel('Time [s]', 'FontSize', 12, 'FontWeight', 'bold')
+ylabel('Pitch rate q(t)', 'FontSize', 12, 'FontWeight', 'bold')
+title('Pitch rate tracking response', 'FontSize', 13)
+grid on
+overshoot = (max(y3)- y3(end))/(y3(end))*100;
+
+figure(4)
+tf_pitchangle = tf_new2*(1/s);
+y4 = lsim(tf_pitchangle,u,t);
+plot(t, y4)
+xlabel('Time [s]', 'FontSize', 12, 'FontWeight', 'bold')
+ylabel('Pitch angle \Theta (t)', 'FontSize', 12, 'FontWeight', 'bold')
+title('Pitch angle tracking response', 'FontSize', 13)
+grid on
+
+qmoverqs = max(y3)/y3(t==4);
+figure(5)
 ptch = patch([0 0.3 0.06 0],[1 1 3 3], 'green', 'FaceAlpha', 0.5)
 hold on
 scatter(DB_over_q, qmoverqs,30, 'MarkerEdgeColor', [1 0 1],...
     'MarkerFaceColor', [1 0 0], 'LineWidth', 1.5)
 xlim([-0.4,0.6])
 ylim([1,4])
-xlabel('OS/q_s             DB/q_s  [s]', 'FontSize', 15, 'FontWeight', 'bold')
-ylabel('q_m/q_s  [-]', 'FontSize', 15, 'FontWeight', 'bold')
+xlabel('OS/q_s             DB/q_s  [s]', 'FontSize', 10, 'FontWeight', 'bold')
+ylabel('q_m/q_s  [-]', 'FontSize', 10, 'FontWeight', 'bold')
 grid on
-title('Criterion for the tracking task', 'FontSize', 15)
+title('Criterion for the tracking task', 'FontSize', 13)
 
 
 
@@ -229,7 +259,7 @@ long_red_sp_tf4_extra = minreal(tf(long_red2_extra));
 q_el4_extra = long_red_sp_tf4_extra(4,2);
 t = 0:0.01:300;
 y1_extra = step(q_el4_extra, t);
-figure(4)
+figure(6)
 plot(t, y1_extra)
 hold on
 y2_extra = step(q_el_extra, t);
@@ -278,7 +308,7 @@ tf_new1_extra = minreal((K_q_extra*(1+T_theta_extra*s))/(s^2+2*zeta_required_ext
 filter_extra = (1+T_theta_required_extra*s)/(1+T_theta_extra*s)
 tf_new2_extra = minreal(tf_new1_extra*filter_extra)
 t = 0:0.001:30;
-figure(5)
+figure(7)
 opt_extra = stepDataOptions('StepAmplitude', -1);
 [y3_extra, t] = step(tf_new2_extra, opt_extra);
 plot(t, y3_extra)
@@ -286,7 +316,7 @@ overshoot_extra = (max(y3_extra)- y3_extra(end))/(y3_extra(end))*100
 
 
 qmoverqs_extra = max(y3_extra)/y3_extra(end);
-figure(6)
+figure(8)
 ptch_extra = patch([0 0.3 0.06 0],[1 1 3 3], 'green', 'FaceAlpha', 0.5)
 hold on
 scatter(DB_over_q_extra, qmoverqs_extra,30, 'MarkerEdgeColor', [1 0 1],...
@@ -297,6 +327,5 @@ xlabel('OS/q_s             DB/q_s  [s]', 'FontSize', 15, 'FontWeight', 'bold')
 ylabel('q_m/q_s  [-]', 'FontSize', 15, 'FontWeight', 'bold')
 grid on
 title('Criterion for the tracking task', 'FontSize', 15)
-%overshoot is less than 1, thus the lower part of the "satisfactory" region
-%cannot be attained and drobback is not possible.
+
 
