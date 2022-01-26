@@ -32,15 +32,16 @@ D_ac1 = long_red1.D;
 % reduced state space model: 
 ss_red = ss(A_ac1, B_ac1, C_ac1, D_ac1, 'StateName', SS_long_lo.StateName(states_lon2), ...
     'InputName', SS_long_lo.InputName(inputs_lon2), 'OutputName', SS_long_lo.OutputName(outputs_lon2))
-
+%{
 % construct pitch attitude hold mode 
 % inner loop: pitch damper -> determine K_q via RL
 tfs = minreal(tf(ss_red));
 H_q_el = tfs(5,2);
 pole(H_q_el);
 servo = tf([20.2], [1 20.2]);
-%rltool(minreal(-H_q_el*servo))
+%sisotool(minreal(-H_q_el*servo))
 K_q = -0.16635;
+
 A_new = A_ac1 - B_ac1(:,2)*C_ac1(5,:)*K_q;
 
 ss_red2 = ss(A_new, B_ac1, C_ac1, D_ac1, 'StateName', SS_long_lo.StateName(states_lon2), ...
@@ -48,8 +49,9 @@ ss_red2 = ss(A_new, B_ac1, C_ac1, D_ac1, 'StateName', SS_long_lo.StateName(state
 
 % construct pitch attitude hold mode 
 tfs2 = minreal(tf(ss_red2)); 
-H_theta_el = tfs2(4,1);
-%rltool(-H_theta_el)
+H_theta_el = tfs2(4,2)
+%sisotool(-H_theta_el)
+
 % we need PID controller 
 K_theta = 1.5104;
 
@@ -58,11 +60,18 @@ H_v_thr = tfs(2,1);
 engine = tf([1],[1 1]);
 %rltool(engine*H_v_thr)
 % tune PID via Ziegler Nichols 
-K_crit = 0.0091311
-T_crit = 175
-K_p_v = 0.6*K_crit
-K_i_V = K_p_v/(0.5*T_crit)
-K_d_V = 0.125*T_crit*K_p_v
+K_crit = 0.0091311;
+T_crit = 175;
+K_p_v = 0.6*K_crit;
+K_i_V = K_p_v/(0.5*T_crit);
+K_d_V = 0.125*T_crit*K_p_v;
+%}
+%transfer function GS_angle/theta 
+tfs = minreal(tf(ss_red))
+H_alpha_el = tfs(3,2)
+H_theta_el = tfs(4,2)
+H_gs_theta = (1 - (H_alpha_el/H_theta_el))
+[num_gs_theta, denum_gs_theta] = tfdata(H_gs_theta, 'v')
 
 
 
