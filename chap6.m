@@ -154,10 +154,11 @@ ylabel('p [rad/s]');
 title('roll rate response to aileron step input (Aperiodic roll)'); 
 
 % plot spiral
-%fig5 = figure(5); 
-%plot(step(H_phi_ail*input_spiral))
-%xlabel('time [s]'); 
-%ylabel('\phi [°]'); 
-%title('roll angle reponse to aileron step input (spiral)'); 
+fig5 = figure(5); 
+[y, time] = impulse(-H_phi_ail)
+plot(time,y)
+xlabel('time [s]'); 
+ylabel('\phi [°]'); 
+title('roll angle reponse to aileron impulse input (spiral)'); 
 
 
