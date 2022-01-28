@@ -153,54 +153,6 @@ title('Criterion for the tracking task', 'FontSize', 13)
 
 
 
-
-% Ward's take on determining K_alpha and K_q
-
-% 1) determine alpha to elevator TF
-%H_alpha = long_red_sp_tf(1,1)
-
-% 2) use rltool to determine open loop K_alpha to obtain w_n_sp > 8.2296
- %rad/s
-
-%rltool(-H_alpha)
-
-% gain K_alpha is -3.6506 from rltool
-%K_alpha = -3.6506
-
-% 3) incorporate alpha feedback into new state space (inner loop)
-%A_ac_sp_new = A_ac_sp - B_ac_sp*C_ac_sp(1,:)*K_alpha
-
-%long_red_sp_new = ss(A_ac_sp_new, B_ac_sp, C_ac_sp, D_ac_sp, 'StateName', long_red2.StateName(states_lon_sp), ...
-%    'InputName', long_red2.InputName(inputs_lon_sp));
-
-% 4) extract q to elevator TF
-%tfs = minreal(tf(long_red_sp_new))
-%H_q = tfs(2)
-
-% 5) determine outer loop gain K_q to get desired damping ratio of at least
-% 0.5
-%rltool(-H_q)
-
-% gain of -0.32844 results in zeta = 0.502 and w_n_sp = 8.6 rad/s
-% gain of -0.7778 results in zeta = 0.925 and w_n_sp = 9.03 rad/s => more
-% damping => favourable 
-
-%K_q = -0.32844
-
-% 6) determine new state space with outer loop included as well 
-%A_ac_sp_final = A_ac_sp_new - B_ac_sp*C_ac_sp(2,:)*K_q
-%long_red_sp_final = ss(A_ac_sp_final, B_ac_sp, C_ac_sp, D_ac_sp, 'StateName', long_red2.StateName(states_lon_sp), ...
-%    'InputName', long_red2.InputName(inputs_lon_sp));
-
-% 7) extract TF to check final response 
-%tfs2 = minreal(tf(long_red_sp_final))
-%H_q = tfs2(2)
-
-% 8) plot step response to see results of gains 
-%fig3 = figure(3);
-%step(-H_q)
-%ylabel('q [rad/s]')
-
 %%
 load('20000_600_lin.mat')
 
@@ -328,4 +280,35 @@ ylabel('q_m/q_s  [-]', 'FontSize', 15, 'FontWeight', 'bold')
 grid on
 title('Criterion for the tracking task', 'FontSize', 15)
 
+%%
+V_interpol = 213.64;
+w_required_interpol = 0.03*V_interpol;
+T_theta_required_interpol = 1/(0.75*w_required);
+zeta_required_interpol = 0.5;
+K_q_interpol = K_q + (V_interpol - V)*((K_q_extra - K_q)/(V_extra - V))
 
+CAP_interpol = (w_required_interpol)^2/(V_interpol/(g*T_theta_required_interpol))
+DB_over_q_interpol = T_theta_required_interpol - 2*(zeta_required_interpol/w_required_interpol);
+s = tf('s');
+tf_new1_interpol = minreal((K_q_extra*(1+T_theta*s))/(s^2+2*zeta_required_interpol*w_required_interpol*s+w_required_interpol^2));
+filter_interpol = (1+T_theta_required_interpol*s)/(1+T_theta*s)
+tf_new2_interpol = minreal(tf_new1_interpol*filter_interpol)
+t = 0:0.001:30;
+figure(9)
+opt_interpol = stepDataOptions('StepAmplitude', -1);
+[y3_interpol, t] = step(tf_new2_interpol, opt_interpol);
+plot(t, y3_interpol)
+overshoot_interpol = (max(y3_interpol)- y3_interpol(end))/(y3_interpol(end))*100
+
+qmoverqs_interpol = max(y3_interpol)/y3_interpol(end);
+figure(10)
+ptch_interpol = patch([0 0.3 0.06 0],[1 1 3 3], 'green', 'FaceAlpha', 0.5)
+hold on
+scatter(DB_over_q_interpol, qmoverqs_interpol,30, 'MarkerEdgeColor', [1 0 1],...
+    'MarkerFaceColor', [1 0 0], 'LineWidth', 1.5)
+xlim([-0.4,0.6])
+ylim([1,4])
+xlabel('OS/q_s                      DB/q_s  [s]', 'FontSize', 12, 'FontWeight', 'bold')
+ylabel('q_m/q_s  [-]', 'FontSize', 12, 'FontWeight', 'bold')
+grid on
+title('Criterion for the tracking task', 'FontSize', 13)
